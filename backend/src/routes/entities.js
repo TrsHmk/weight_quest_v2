@@ -33,6 +33,14 @@ const ENTITY_COLUMNS = {
     'frozen_privileges', 'penalty_zone', 'created_at',
   ],
   DailyLog: [
+    'id', 'date::text as date', 'weight', 'steps', 'xp_earned', 'money_saved',
+    'events', 'streak_day', 'penalty_zone', 'created_at',
+  ],
+};
+
+// Columns used for INSERT/UPDATE (no SQL expressions)
+const WRITABLE_COLUMNS = {
+  DailyLog: [
     'id', 'date', 'weight', 'steps', 'xp_earned', 'money_saved',
     'events', 'streak_day', 'penalty_zone', 'created_at',
   ],
@@ -74,8 +82,9 @@ router.post('/:entity', async (req, res) => {
   const table = ENTITY_TABLES[req.params.entity];
   if (!table) return res.status(404).json({ message: 'Unknown entity' });
 
-  const cols = ENTITY_COLUMNS[req.params.entity];
-  const writableCols = cols.filter(c => c !== 'id' && c !== 'created_at');
+  const selectCols = ENTITY_COLUMNS[req.params.entity];
+  const rawCols = (WRITABLE_COLUMNS[req.params.entity] || selectCols);
+  const writableCols = rawCols.filter(c => c !== 'id' && c !== 'created_at');
   const fields = Object.keys(req.body).filter(k => writableCols.includes(k));
   if (!fields.length) return res.status(400).json({ message: 'No valid fields provided' });
 
@@ -88,7 +97,7 @@ router.post('/:entity', async (req, res) => {
 
   try {
     const result = await db.query(
-      `INSERT INTO ${table} (user_id, ${fields.join(', ')}) VALUES ($1, ${placeholders}) RETURNING ${cols.join(', ')}`,
+      `INSERT INTO ${table} (user_id, ${fields.join(', ')}) VALUES ($1, ${placeholders}) RETURNING ${selectCols.join(', ')}`,
       [req.userId, ...values]
     );
     res.status(201).json(parseRow(req.params.entity, result.rows[0]));
@@ -103,8 +112,9 @@ router.put('/:entity/:id', async (req, res) => {
   const table = ENTITY_TABLES[req.params.entity];
   if (!table) return res.status(404).json({ message: 'Unknown entity' });
 
-  const cols = ENTITY_COLUMNS[req.params.entity];
-  const writableCols = cols.filter(c => c !== 'id' && c !== 'created_at');
+  const selectCols = ENTITY_COLUMNS[req.params.entity];
+  const rawCols = (WRITABLE_COLUMNS[req.params.entity] || selectCols);
+  const writableCols = rawCols.filter(c => c !== 'id' && c !== 'created_at');
   const fields = Object.keys(req.body).filter(k => writableCols.includes(k));
   if (!fields.length) return res.status(400).json({ message: 'No valid fields to update' });
 
@@ -117,7 +127,7 @@ router.put('/:entity/:id', async (req, res) => {
 
   try {
     const result = await db.query(
-      `UPDATE ${table} SET ${setClauses} WHERE id = $1 AND user_id = $2 RETURNING ${cols.join(', ')}`,
+      `UPDATE ${table} SET ${setClauses} WHERE id = $1 AND user_id = $2 RETURNING ${selectCols.join(', ')}`,
       [req.params.id, req.userId, ...values]
     );
     if (!result.rows.length) return res.status(404).json({ message: 'Entity not found' });
