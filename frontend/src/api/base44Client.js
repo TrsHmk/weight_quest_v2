@@ -44,6 +44,10 @@ function createEntityClient(name) {
 }
 
 export const base44 = {
+  api: {
+    get: (path) => request('GET', path),
+    post: (path, body) => request('POST', path, body),
+  },
   auth: {
     me: () => request('GET', '/auth/me'),
     logout: (redirectUrl) => {

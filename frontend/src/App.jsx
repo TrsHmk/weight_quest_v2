@@ -11,6 +11,7 @@ import LogEntry from '@/pages/LogEntry';
 import Achievements from '@/pages/Achievements';
 import Journal from '@/pages/Journal';
 import Profile from '@/pages/Profile';
+import Inventory from '@/pages/Inventory';
 import Login from '@/pages/Login';
 
 const AuthenticatedApp = () => {
@@ -44,6 +45,7 @@ const AuthenticatedApp = () => {
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/journal" element={<Journal />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/inventory" element={<Inventory />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

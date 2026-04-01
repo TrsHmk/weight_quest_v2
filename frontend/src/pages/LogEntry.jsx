@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -8,6 +9,7 @@ import { motion } from "framer-motion";
 import { Scale, Footprints, Zap, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { rollArtifact, RARITY_CONFIG } from "@/lib/artifacts";
 import {
   calculateWeightXP, calculateStepsXP, calculateStepsMoney,
   calculateStreakXP, getPenaltyZone, getLevelForXP,
@@ -18,6 +20,7 @@ export default function LogEntry() {
   const [weight, setWeight] = useState("");
   const [steps, setSteps] = useState("");
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const todayStr = format(new Date(), "yyyy-MM-dd");
 
   const { data: profiles = [] } = useQuery({
@@ -127,9 +130,24 @@ export default function LogEntry() {
       return { totalDayXP, events };
     },
     onSuccess: (data) => {
-      toast.success(`+${data.totalDayXP} XP заробленo! ⚔️`);
+      toast.success(`День записано! +${data.totalDayXP} XP ⚔️`, { duration: 2000 });
+
+      // Roll for artifact drop
+      const artifact = rollArtifact();
+      if (artifact) {
+        const cfg = RARITY_CONFIG[artifact.rarity];
+        setTimeout(() => {
+          toast(`${artifact.icon} Артефакт випав!`, {
+            description: `[${cfg.label}] ${artifact.name} — ${artifact.effect}`,
+            duration: 5000,
+          });
+        }, 600);
+        base44.api.post('/inventory', { artifact_id: artifact.id }).catch(() => {});
+      }
+
       setWeight("");
       setSteps("");
+      setTimeout(() => navigate("/"), 1500);
     },
   });
 
