@@ -10,6 +10,21 @@ const ENTITY_TABLES = {
   DailyLog: 'daily_logs',
 };
 
+// pg returns NUMERIC columns as strings — parse them to JS numbers before sending
+const FLOAT_FIELDS = {
+  PlayerProfile: ['start_weight', 'current_weight', 'lowest_weight', 'total_money_saved'],
+  DailyLog: ['weight', 'money_saved'],
+};
+
+function parseRow(entity, row) {
+  const fields = FLOAT_FIELDS[entity] || [];
+  const out = { ...row };
+  fields.forEach(f => {
+    if (out[f] != null) out[f] = parseFloat(out[f]);
+  });
+  return out;
+}
+
 const ENTITY_COLUMNS = {
   PlayerProfile: [
     'id', 'total_xp', 'current_level', 'current_streak', 'best_streak',
@@ -47,7 +62,7 @@ router.get('/:entity', async (req, res) => {
       `SELECT ${cols} FROM ${table} WHERE user_id = $1 ORDER BY ${orderBy} LIMIT $2`,
       [req.userId, limitVal]
     );
-    res.json(result.rows);
+    res.json(result.rows.map(r => parseRow(req.params.entity, r)));
   } catch (err) {
     console.error('List error:', err);
     res.status(500).json({ message: 'Failed to list entities' });
@@ -76,7 +91,7 @@ router.post('/:entity', async (req, res) => {
       `INSERT INTO ${table} (user_id, ${fields.join(', ')}) VALUES ($1, ${placeholders}) RETURNING ${cols.join(', ')}`,
       [req.userId, ...values]
     );
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(parseRow(req.params.entity, result.rows[0]));
   } catch (err) {
     console.error('Create error:', err);
     res.status(500).json({ message: 'Failed to create entity' });
@@ -106,7 +121,7 @@ router.put('/:entity/:id', async (req, res) => {
       [req.params.id, req.userId, ...values]
     );
     if (!result.rows.length) return res.status(404).json({ message: 'Entity not found' });
-    res.json(result.rows[0]);
+    res.json(parseRow(req.params.entity, result.rows[0]));
   } catch (err) {
     console.error('Update error:', err);
     res.status(500).json({ message: 'Failed to update entity' });
