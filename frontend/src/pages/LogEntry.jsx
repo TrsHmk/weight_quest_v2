@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { Scale, Footprints, Zap, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { rollArtifact, RARITY_CONFIG } from "@/lib/artifacts";
+import { rollArtifact, rollChest, RARITY_CONFIG } from "@/lib/artifacts";
 import {
   calculateWeightXP, calculateStepsXP, calculateStepsMoney,
   calculateStreakXP, getPenaltyZone, getLevelForXP,
@@ -143,6 +143,18 @@ export default function LogEntry() {
           });
         }, 600);
         base44.api.post('/inventory', { artifact_id: artifact.id }).catch(() => {});
+      }
+
+      // Roll for chest drop
+      const chest = rollChest();
+      if (chest) {
+        setTimeout(() => {
+          toast(`${chest.icon} Скриня випала!`, {
+            description: `[${RARITY_CONFIG[chest.rarity].label}] ${chest.name} — відкрий в інвентарі!`,
+            duration: 5000,
+          });
+        }, 1200);
+        base44.api.post('/inventory', { artifact_id: chest.id }).catch(() => {});
       }
 
       setWeight("");

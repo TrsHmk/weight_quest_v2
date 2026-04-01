@@ -53,4 +53,31 @@ router.post('/:id/use', async (req, res) => {
   }
 });
 
+// POST /api/inventory/:id/open — open a chest, get a random artifact
+router.post('/:id/open', async (req, res) => {
+  const { artifact_id: droppedArtifactId } = req.body; // frontend rolls the artifact and sends the id
+  if (!droppedArtifactId) return res.status(400).json({ message: 'artifact_id required' });
+
+  try {
+    // Mark chest as used
+    const chest = await db.query(
+      `UPDATE inventory SET used = TRUE, used_at = NOW()
+       WHERE id = $1 AND user_id = $2 AND used = FALSE
+       RETURNING id`,
+      [req.params.id, req.userId]
+    );
+    if (!chest.rows.length) return res.status(404).json({ message: 'Chest not found or already opened' });
+
+    // Add the rolled artifact to inventory
+    const artifact = await db.query(
+      'INSERT INTO inventory (user_id, artifact_id) VALUES ($1, $2) RETURNING id, artifact_id, acquired_at, used, used_at',
+      [req.userId, droppedArtifactId]
+    );
+    res.status(201).json(artifact.rows[0]);
+  } catch (err) {
+    console.error('Chest open error:', err);
+    res.status(500).json({ message: 'Failed to open chest' });
+  }
+});
+
 module.exports = router;

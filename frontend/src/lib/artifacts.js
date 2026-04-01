@@ -38,6 +38,44 @@ export const ARTIFACTS = [
     effect: 'Дебаф: зроби 15 стрибків на місці',
     type: 'debuff_quest',
   },
+  {
+    id: 'skuf_belly',
+    name: 'Пузо Скуфа',
+    icon: '🍺',
+    rarity: 'common',
+    desc: 'Нажите роками. Тепле. Своє. Рідне.',
+    effect: 'Дебаф: з\'їж щось шкідливе і визнай це в журналі',
+    type: 'debuff_quest',
+  },
+  {
+    id: 'dirty_underpants',
+    name: 'Обісрані Труси',
+    icon: '🩲',
+    rarity: 'common',
+    desc: 'Загадковий артефакт невідомого походження. Нікому не показуй.',
+    effect: '-15 XP. Доля глузує. Але ти вижив.',
+    type: 'xp_penalty',
+    value: -15,
+  },
+  {
+    id: 'mamas_towel',
+    name: 'Рушник Мами',
+    icon: '🧣',
+    rarity: 'common',
+    desc: 'Пахне пирогами та любов\'ю. Дає силу.',
+    effect: '+10 XP і відчуття що ти потрібний',
+    type: 'xp_bonus',
+    value: 10,
+  },
+  {
+    id: 'neighbour_bychok',
+    name: 'Бичок від Сусіда Петра',
+    icon: '🚬',
+    rarity: 'common',
+    desc: '"Ну візьми, чого ти" — Петро, сходами',
+    effect: '+5 XP але покашляй 5 разів для вигляду',
+    type: 'debuff_quest',
+  },
 
   // ── UNCOMMON ─────────────────────────────────────────────
   {
@@ -80,6 +118,26 @@ export const ARTIFACTS = [
     type: 'debuff_or_penalty',
     value: 10,
   },
+  {
+    id: 'grandma_slipper',
+    name: 'Тапок Бабусі',
+    icon: '🥿',
+    rarity: 'uncommon',
+    desc: 'Метальна зброя ближнього бою. Боляче.',
+    effect: '7 хвилин присідань або -20 XP. Бабуся дивиться.',
+    type: 'debuff_or_penalty',
+    value: 20,
+  },
+  {
+    id: 'salo_first_grade',
+    name: 'Сало Першого Сорту',
+    icon: '🥓',
+    rarity: 'uncommon',
+    desc: 'Домашнє. З часником. Священне.',
+    effect: '+35 XP просто тому що ти заслужив',
+    type: 'xp_bonus',
+    value: 35,
+  },
 
   // ── RARE ─────────────────────────────────────────────────
   {
@@ -120,6 +178,26 @@ export const ARTIFACTS = [
     desc: '"Я в твої роки 20 км пішки ходив на роботу"',
     effect: '+50 XP, але зроби 20 хвилин прогулянки',
     type: 'debuff_quest_bonus',
+    value: 50,
+  },
+  {
+    id: 'gigachad_aura',
+    name: 'Аура Гігачада',
+    icon: '😤',
+    rarity: 'rare',
+    desc: 'Ти просто заходиш — і всі мовчать. Поважають.',
+    effect: '+60 XP та імунітет до сорому на 1 день',
+    type: 'xp_bonus',
+    value: 60,
+  },
+  {
+    id: 'shevchenko_icon',
+    name: 'Ікона Тараса',
+    icon: '📜',
+    rarity: 'rare',
+    desc: 'Борітеся — поборете. Він про дієту теж так думав.',
+    effect: '+50 XP та поетичне натхнення на весь день',
+    type: 'xp_bonus',
     value: 50,
   },
 
@@ -164,6 +242,36 @@ export const ARTIFACTS = [
     type: 'allow_fastfood',
     value: 1,
   },
+  {
+    id: 'cossack_pipe',
+    name: 'Козацька Люлька',
+    icon: '🪈',
+    rarity: 'epic',
+    desc: 'Дим розганяє тривогу і зайві калорії.',
+    effect: 'Дозволяє 1 алкоголь без штрафів і з козацькою гідністю',
+    type: 'allow_beer',
+    value: 1,
+  },
+  {
+    id: 'zaluzhnyi_cap',
+    name: 'Кепка Залужного',
+    icon: '🧢',
+    rarity: 'epic',
+    desc: 'Надягнув — і одразу стратег. Поважають.',
+    effect: '+100 XP та 10 000 кроків зараховано автоматично',
+    type: 'xp_bonus',
+    value: 100,
+  },
+  {
+    id: 'ufo_over_ukraine',
+    name: 'НЛО над Батьківщиною',
+    icon: '🛸',
+    rarity: 'epic',
+    desc: 'Ніхто не знає звідки. Ніхто не знає навіщо.',
+    effect: 'Рандом: або +300 XP або 30 присідань і 10 хв бігу',
+    type: 'gamble',
+    value: 300,
+  },
 
   // ── LEGENDARY ────────────────────────────────────────────
   {
@@ -196,6 +304,79 @@ export const ARTIFACTS = [
     type: 'gamble',
     value: 0,
   },
+  {
+    id: 'gigachad_aura_max',
+    name: 'Аура Гігачада MAX',
+    icon: '🦁',
+    rarity: 'legendary',
+    desc: 'Повна форма. Волосся розвівається в безвітряну погоду.',
+    effect: '2x XP на наступні 5 днів. Натовп аплодує стоячи.',
+    type: 'legendary_buff',
+    value: 5,
+  },
+  {
+    id: 'zsu_tractor',
+    name: 'Трактор ЗСУ',
+    icon: '🚜',
+    rarity: 'legendary',
+    desc: 'Трофей. Тягне все — танки, калорії, депресію.',
+    effect: '+800 XP миттєво. Степові предки схвалюють.',
+    type: 'xp_bonus',
+    value: 800,
+  },
+  {
+    id: 'zaporizhian_trousers',
+    name: 'Шаровари Запорожця',
+    icon: '🩳',
+    rarity: 'legendary',
+    desc: 'Широкі. Вільні. Ніякого дієтичного тиску.',
+    effect: 'Всі штрафи та дебафи відключено на 7 днів',
+    type: 'legendary_buff',
+    value: 7,
+  },
+];
+
+export const CHESTS = [
+  {
+    id: 'chest_wood',
+    name: 'Дерев\'яний Ящик',
+    icon: '📫',
+    rarity: 'common',
+    desc: 'Знайшов на смітнику. Всередині щось брязкає.',
+    rarityPool: ['common', 'uncommon'],
+  },
+  {
+    id: 'chest_iron',
+    name: 'Залізний Куфр',
+    icon: '🗃️',
+    rarity: 'uncommon',
+    desc: 'Бабусин. Пахне нафталіном та таємницями.',
+    rarityPool: ['uncommon', 'rare'],
+  },
+  {
+    id: 'chest_gold',
+    name: 'Козацька Скриня',
+    icon: '🧰',
+    rarity: 'rare',
+    desc: 'Знайшов у степу. Поруч не було нікого... або було?',
+    rarityPool: ['rare', 'epic'],
+  },
+  {
+    id: 'chest_epic',
+    name: 'Гетьманська Скарбниця',
+    icon: '💼',
+    rarity: 'epic',
+    desc: 'З особистих покоїв. Печатка Мазепи не зламана.',
+    rarityPool: ['epic', 'legendary'],
+  },
+  {
+    id: 'chest_legendary',
+    name: 'Скриня Мамая',
+    icon: '🎁',
+    rarity: 'legendary',
+    desc: 'Мамай грав бандуру і посміхався. Ти теж посміхнешся.',
+    rarityPool: ['legendary'],
+  },
 ];
 
 export const RARITY_CONFIG = {
@@ -207,24 +388,49 @@ export const RARITY_CONFIG = {
 };
 
 const RARITY_WEIGHTS = { common: 45, uncommon: 30, rare: 17, epic: 6, legendary: 2 };
-const DROP_CHANCE = 0.25; // 25% per log
+const CHEST_WEIGHTS  = { common: 50, uncommon: 30, rare: 14, epic: 5, legendary: 1 };
+const DROP_CHANCE    = 0.25; // 25% artifact per log
+const CHEST_CHANCE   = 0.10; // 10% chest per log
+
+function pickRarity(weights) {
+  const entries = Object.entries(weights);
+  const total = entries.reduce((s, [, w]) => s + w, 0);
+  let roll = Math.random() * total;
+  for (const [r, w] of entries) {
+    roll -= w;
+    if (roll <= 0) return r;
+  }
+  return entries[0][0];
+}
 
 export function rollArtifact() {
   if (Math.random() > DROP_CHANCE) return null;
-
-  const entries = Object.entries(RARITY_WEIGHTS);
-  const total = entries.reduce((s, [, w]) => s + w, 0);
-  let roll = Math.random() * total;
-  let rarity = 'common';
-  for (const [r, w] of entries) {
-    roll -= w;
-    if (roll <= 0) { rarity = r; break; }
-  }
-
+  const rarity = pickRarity(RARITY_WEIGHTS);
   const pool = ARTIFACTS.filter(a => a.rarity === rarity);
+  return pool[Math.floor(Math.random() * pool.length)] || null;
+}
+
+export function rollChest() {
+  if (Math.random() > CHEST_CHANCE) return null;
+  const rarity = pickRarity(CHEST_WEIGHTS);
+  const pool = CHESTS.filter(c => c.rarity === rarity);
+  return pool[Math.floor(Math.random() * pool.length)] || null;
+}
+
+export function openChest(chest) {
+  const pool = ARTIFACTS.filter(a => chest.rarityPool.includes(a.rarity));
+  if (!pool.length) return null;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
 export function getArtifact(id) {
   return ARTIFACTS.find(a => a.id === id);
+}
+
+export function getChest(id) {
+  return CHESTS.find(c => c.id === id);
+}
+
+export function getItem(id) {
+  return getChest(id) || getArtifact(id);
 }
