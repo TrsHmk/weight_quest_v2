@@ -1,0 +1,115 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-pixel: 'Press Start 2P', cursive;
+    --font-inter: 'Inter', sans-serif;
+
+    --background: 250 25% 6%;
+    --foreground: 240 20% 95%;
+    --card: 250 20% 10%;
+    --card-foreground: 240 20% 95%;
+    --popover: 250 20% 10%;
+    --popover-foreground: 240 20% 95%;
+    --primary: 270 80% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 250 15% 16%;
+    --secondary-foreground: 240 20% 90%;
+    --muted: 250 15% 14%;
+    --muted-foreground: 240 10% 55%;
+    --accent: 45 100% 55%;
+    --accent-foreground: 0 0% 5%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 250 15% 18%;
+    --input: 250 15% 18%;
+    --ring: 270 80% 65%;
+    --chart-1: 270 80% 65%;
+    --chart-2: 160 70% 45%;
+    --chart-3: 45 100% 55%;
+    --chart-4: 200 80% 55%;
+    --chart-5: 340 75% 55%;
+    --radius: 0.75rem;
+    --sidebar-background: 250 20% 8%;
+    --sidebar-foreground: 240 20% 90%;
+    --sidebar-primary: 270 80% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 250 15% 14%;
+    --sidebar-accent-foreground: 240 20% 90%;
+    --sidebar-border: 250 15% 18%;
+    --sidebar-ring: 270 80% 65%;
+  }
+
+  .dark {
+    --background: 250 25% 6%;
+    --foreground: 240 20% 95%;
+    --card: 250 20% 10%;
+    --card-foreground: 240 20% 95%;
+    --popover: 250 20% 10%;
+    --popover-foreground: 240 20% 95%;
+    --primary: 270 80% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 250 15% 16%;
+    --secondary-foreground: 240 20% 90%;
+    --muted: 250 15% 14%;
+    --muted-foreground: 240 10% 55%;
+    --accent: 45 100% 55%;
+    --accent-foreground: 0 0% 5%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 250 15% 18%;
+    --input: 250 15% 18%;
+    --ring: 270 80% 65%;
+    --chart-1: 270 80% 65%;
+    --chart-2: 160 70% 45%;
+    --chart-3: 45 100% 55%;
+    --chart-4: 200 80% 55%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 250 20% 8%;
+    --sidebar-foreground: 240 20% 90%;
+    --sidebar-primary: 270 80% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 250 15% 14%;
+    --sidebar-accent-foreground: 240 20% 90%;
+    --sidebar-border: 250 15% 18%;
+    --sidebar-ring: 270 80% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-inter;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(250 20% 8%);
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(250 15% 25%);
+  border-radius: 3px;
+}
+
+/* Glow animations */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px hsl(270 80% 65% / 0.3); }
+  50% { box-shadow: 0 0 30px hsl(270 80% 65% / 0.6); }
+}
+@keyframes gold-glow {
+  0%, 100% { box-shadow: 0 0 10px hsl(45 100% 55% / 0.3); }
+  50% { box-shadow: 0 0 25px hsl(45 100% 55% / 0.5); }
+}
+
+.glow-purple { animation: pulse-glow 2s ease-in-out infinite; }
+.glow-gold { animation: gold-glow 2s ease-in-out infinite; }
