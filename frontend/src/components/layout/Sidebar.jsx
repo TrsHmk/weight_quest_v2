@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { path: "/", icon: LayoutDashboard, label: "Штаб" },
   { path: "/log", icon: PenLine, label: "Запис" },
+  { path: "/quests", icon: Swords, label: "Квести" },
   { path: "/achievements", icon: Trophy, label: "Досягнення" },
   { path: "/journal", icon: ScrollText, label: "Журнал" },
   { path: "/inventory", icon: Backpack, label: "Інвентар" },

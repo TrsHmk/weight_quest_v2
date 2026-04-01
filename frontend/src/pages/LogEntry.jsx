@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { Scale, Footprints, Zap, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { rollArtifact, rollChest, RARITY_CONFIG } from "@/lib/artifacts";
+import { rollArtifact, rollChest, RARITY_CONFIG, getChest } from "@/lib/artifacts";
 import {
   calculateWeightXP, calculateStepsXP, calculateStepsMoney,
   calculateStreakXP, getPenaltyZone, getLevelForXP,
@@ -127,7 +127,7 @@ export default function LogEntry() {
       queryClient.invalidateQueries({ queryKey: ["player-profile"] });
       queryClient.invalidateQueries({ queryKey: ["daily-logs"] });
 
-      return { totalDayXP, events };
+      return { totalDayXP, events, currentStreak, penaltyZone, steps: parseInt(steps) || 0, weight: parseFloat(weight), prevWeight: profile?.current_weight || null };
     },
     onSuccess: (data) => {
       toast.success(`День записано! +${data.totalDayXP} XP ⚔️`, { duration: 2000 });
@@ -156,6 +156,25 @@ export default function LogEntry() {
         }, 1200);
         base44.api.post('/inventory', { artifact_id: chest.id }).catch(() => {});
       }
+
+      // Check quest completion
+      base44.api.post('/quests/complete', {
+        steps: data.steps,
+        weight: data.weight,
+        prevWeight: data.prevWeight,
+        streak: data.currentStreak,
+        penaltyZone: data.penaltyZone,
+      }).then(({ completed }) => {
+        completed.forEach((q, idx) => {
+          const chest = getChest(q.chest);
+          setTimeout(() => {
+            toast(`${q.icon} Квест виконано: ${q.name}!`, {
+              description: `Нагорода: ${chest?.icon || ''} ${chest?.name || q.chest} додано до інвентаря`,
+              duration: 5000,
+            });
+          }, 2000 + idx * 600);
+        });
+      }).catch(() => {});
 
       setWeight("");
       setSteps("");
