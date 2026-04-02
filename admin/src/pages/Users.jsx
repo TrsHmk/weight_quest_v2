@@ -62,7 +62,12 @@ export default function Users() {
                 onClick={() => navigate(`/users/${u.id}`)}
               >
                 <td className="px-4 py-3">
-                  <p className="font-medium text-slate-200">{u.username}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-medium text-slate-200">{u.username}</p>
+                    {u.is_admin && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-semibold">ADMIN</span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">{u.email}</p>
                 </td>
                 <td className="px-4 py-3">

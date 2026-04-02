@@ -1,7 +1,8 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PenLine, Trophy, ScrollText, User, Swords, Backpack, BarChart3 } from "lucide-react";
+import { LayoutDashboard, PenLine, Trophy, ScrollText, User, Swords, Backpack, BarChart3, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/AuthContext";
 
 const NAV_ITEMS = [
   { path: "/", icon: LayoutDashboard, label: "Штаб" },
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const location = useLocation();
+  const { logout } = useAuth();
 
   return (
     <>
@@ -51,6 +53,16 @@ export default function Sidebar() {
             );
           })}
         </nav>
+
+        <div className="px-3 mb-2">
+          <button
+            onClick={() => logout()}
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-red-400 hover:bg-red-900/10 transition-all duration-200"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Вийти</span>
+          </button>
+        </div>
 
         <div className="p-4 mx-3 mb-4 rounded-lg bg-secondary/50 border border-border">
           <p className="font-pixel text-accent text-[8px] leading-relaxed">⚔️ Кожен день — нова битва</p>

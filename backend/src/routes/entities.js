@@ -12,7 +12,7 @@ const ENTITY_TABLES = {
 
 // pg returns NUMERIC columns as strings — parse them to JS numbers before sending
 const FLOAT_FIELDS = {
-  PlayerProfile: ['start_weight', 'current_weight', 'lowest_weight', 'total_money_saved'],
+  PlayerProfile: ['start_weight', 'current_weight', 'lowest_weight', 'total_money_saved', 'goal_weight'],
   DailyLog: ['weight', 'money_saved'],
 };
 
@@ -28,7 +28,7 @@ function parseRow(entity, row) {
 const ENTITY_COLUMNS = {
   PlayerProfile: [
     'id', 'total_xp', 'current_level', 'current_streak', 'best_streak',
-    'start_weight', 'current_weight', 'lowest_weight', 'total_money_saved',
+    'start_weight', 'current_weight', 'lowest_weight', 'goal_weight', 'total_money_saved',
     'total_steps', 'unlocked_milestones', 'unlocked_achievements',
     'frozen_privileges', 'penalty_zone', 'created_at',
   ],

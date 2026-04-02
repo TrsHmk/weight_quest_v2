@@ -32,15 +32,10 @@ export default function Profile() {
     queryFn: () => base44.entities.DailyLog.list("-date", 100),
   });
 
-  const profile = profiles[0] || {
-    total_xp: 0, current_level: 1, current_streak: 0, best_streak: 0,
-    start_weight: 96, current_weight: 96, lowest_weight: 96,
-    total_money_saved: 0, total_steps: 0, unlocked_milestones: [],
-    unlocked_achievements: [],
-  };
+  const profile = profiles[0];
 
-  const level = getLevelForXP(profile.total_xp || 0);
-  const weightLost = Math.max(0, (profile.start_weight || 96) - (profile.current_weight || 96));
+  const level = getLevelForXP(profile?.total_xp || 0);
+  const weightLost = Math.max(0, (profile?.start_weight || 0) - (profile?.current_weight || 0));
   const avgSteps = logs.length > 0 
     ? Math.round(logs.reduce((sum, l) => sum + (l.steps || 0), 0) / logs.length)
     : 0;
@@ -70,7 +65,7 @@ export default function Profile() {
         <h3 className="font-pixel text-[10px] text-accent mb-4">📊 РІВНІ</h3>
         <div className="space-y-3">
           {LEVELS.map((lvl) => {
-            const isCurrentOrPast = (profile.total_xp || 0) >= lvl.xpRequired;
+            const isCurrentOrPast = (profile?.total_xp || 0) >= lvl.xpRequired;
             const isCurrent = lvl.level === level.level;
             return (
               <div key={lvl.level} className="flex items-center gap-3">
@@ -85,7 +80,7 @@ export default function Profile() {
                     <span className="text-[10px] text-muted-foreground">{lvl.xpRequired} XP</span>
                   </div>
                   <Progress
-                    value={isCurrentOrPast ? 100 : Math.min(((profile.total_xp || 0) / lvl.xpRequired) * 100, 100)}
+                    value={isCurrentOrPast ? 100 : Math.min(((profile?.total_xp || 0) / lvl.xpRequired) * 100, 100)}
                     className="h-1 mt-1 bg-secondary"
                   />
                 </div>
@@ -103,17 +98,20 @@ export default function Profile() {
         className="rounded-2xl bg-card border border-border p-6"
       >
         <h3 className="font-pixel text-[10px] text-accent mb-4">📈 СТАТИСТИКА</h3>
-        <StatRow icon={Zap} label="Загальний XP" value={profile.total_xp || 0} color="text-accent" />
-        <StatRow icon={Scale} label="Поточна вага" value={`${(profile.current_weight || 96).toFixed(1)} кг`} color="text-foreground" />
+        <StatRow icon={Zap} label="Загальний XP" value={profile?.total_xp || 0} color="text-accent" />
+        <StatRow icon={Scale} label="Поточна вага" value={`${(profile?.current_weight || 0).toFixed(1)} кг`} color="text-foreground" />
         <StatRow icon={TrendingDown} label="Скинуто" value={`${weightLost.toFixed(1)} кг`} color="text-green-400" />
-        <StatRow icon={Target} label="Мінімальна вага" value={`${(profile.lowest_weight || 96).toFixed(1)} кг`} color="text-primary" />
-        <StatRow icon={Flame} label="Поточний стрік" value={`${profile.current_streak || 0} днів`} color="text-orange-500" />
-        <StatRow icon={Star} label="Найкращий стрік" value={`${profile.best_streak || 0} днів`} color="text-accent" />
-        <StatRow icon={Footprints} label="Всього кроків" value={(profile.total_steps || 0).toLocaleString()} color="text-primary" />
+        {profile?.goal_weight && (
+          <StatRow icon={Target} label="Ціль" value={`${profile.goal_weight.toFixed(1)} кг`} color="text-accent" />
+        )}
+        <StatRow icon={Target} label="Мінімальна вага" value={`${(profile?.lowest_weight || 0).toFixed(1)} кг`} color="text-primary" />
+        <StatRow icon={Flame} label="Поточний стрік" value={`${profile?.current_streak || 0} днів`} color="text-orange-500" />
+        <StatRow icon={Star} label="Найкращий стрік" value={`${profile?.best_streak || 0} днів`} color="text-accent" />
+        <StatRow icon={Footprints} label="Всього кроків" value={(profile?.total_steps || 0).toLocaleString()} color="text-primary" />
         <StatRow icon={Footprints} label="Середні кроки/день" value={avgSteps.toLocaleString()} color="text-primary" />
-        <StatRow icon={Banknote} label="Заощаджено" value={`${(profile.total_money_saved || 0).toLocaleString()} ₴`} color="text-green-400" />
-        <StatRow icon={Trophy} label="Мілстоунів" value={`${(profile.unlocked_milestones || []).length} / ${MILESTONES.length}`} color="text-accent" />
-        <StatRow icon={Trophy} label="Досягнень" value={`${ACHIEVEMENTS.filter(a => a.condition(profile)).length} / ${ACHIEVEMENTS.length}`} color="text-accent" />
+        <StatRow icon={Banknote} label="Заощаджено" value={`${(profile?.total_money_saved || 0).toLocaleString()} ₴`} color="text-green-400" />
+        <StatRow icon={Trophy} label="Мілстоунів" value={`${(profile?.unlocked_milestones || []).length} / ${MILESTONES.length}`} color="text-accent" />
+        <StatRow icon={Trophy} label="Досягнень" value={`${ACHIEVEMENTS.filter(a => a.condition(profile || {})).length} / ${ACHIEVEMENTS.length}`} color="text-accent" />
         <StatRow icon={Star} label="Записів" value={logs.length} color="text-muted-foreground" />
       </motion.div>
     </div>

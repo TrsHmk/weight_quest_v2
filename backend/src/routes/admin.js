@@ -43,18 +43,17 @@ router.get('/users', async (req, res) => {
     const [usersRes, countRes] = await Promise.all([
       db.query(`
         SELECT
-          u.id, u.email, u.username, u.created_at,
+          u.id, u.email, u.username, u.created_at, u.is_admin,
           p.total_xp, p.current_level, p.current_weight,
           p.start_weight, p.current_streak, p.best_streak,
           p.total_steps, p.penalty_zone,
           (SELECT COUNT(*) FROM daily_logs dl WHERE dl.user_id = u.id) AS log_count
         FROM users u
         LEFT JOIN player_profiles p ON p.user_id = u.id
-        WHERE u.is_admin = FALSE
-        ORDER BY u.created_at DESC
+        ORDER BY u.is_admin DESC, u.created_at DESC
         LIMIT $1 OFFSET $2
       `, [limit, offset]),
-      db.query('SELECT COUNT(*) FROM users WHERE is_admin = FALSE'),
+      db.query('SELECT COUNT(*) FROM users'),
     ]);
 
     res.json({
@@ -76,7 +75,7 @@ router.get('/users/:userId', async (req, res) => {
     const [userRes, profileRes, logsRes, invRes] = await Promise.all([
       db.query('SELECT id, email, username, created_at FROM users WHERE id = $1', [userId]),
       db.query('SELECT * FROM player_profiles WHERE user_id = $1', [userId]),
-      db.query('SELECT * FROM daily_logs WHERE user_id = $1 ORDER BY date DESC LIMIT 60', [userId]),
+      db.query('SELECT *, date::text AS date FROM daily_logs WHERE user_id = $1 ORDER BY daily_logs.date DESC LIMIT 60', [userId]),
       db.query('SELECT * FROM inventory WHERE user_id = $1 ORDER BY acquired_at DESC', [userId]),
     ]);
     if (!userRes.rows.length) return res.status(404).json({ message: 'User not found' });
@@ -144,6 +143,32 @@ router.post('/users/:userId/inventory', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ message: 'Failed to add artifact' });
+  }
+});
+
+// POST /api/admin/users/:userId/reset-steps — zero out steps in profile only
+router.post('/users/:userId/reset-steps', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    await db.query(`UPDATE player_profiles SET total_steps = 0 WHERE user_id = $1`, [userId]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to reset steps' });
+  }
+});
+
+// POST /api/admin/users/:userId/reset-weight — reset current_weight to start_weight
+router.post('/users/:userId/reset-weight', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    await db.query(`
+      UPDATE player_profiles
+      SET current_weight = start_weight, lowest_weight = start_weight
+      WHERE user_id = $1
+    `, [userId]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to reset weight' });
   }
 });
 

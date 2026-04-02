@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
-import { Scale, Footprints, Zap, CheckCircle2, Loader2 } from "lucide-react";
+import { Scale, Footprints, Zap, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { rollArtifact, rollChest, RARITY_CONFIG, getChest } from "@/lib/artifacts";
@@ -19,6 +19,7 @@ import {
 export default function LogEntry() {
   const [weight, setWeight] = useState("");
   const [steps, setSteps] = useState("");
+  const [stepsUpdate, setStepsUpdate] = useState("");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const todayStr = format(new Date(), "yyyy-MM-dd");
@@ -41,8 +42,8 @@ export default function LogEntry() {
       const w = parseFloat(weight);
       const s = parseInt(steps) || 0;
       
-      const prevWeight = profile?.current_weight || 96;
-      const lowestWeight = Math.min(profile?.lowest_weight || 96, w);
+      const prevWeight = profile?.current_weight ?? w;
+      const lowestWeight = Math.min(profile?.lowest_weight ?? w, w);
       const currentStreak = (profile?.current_streak || 0) + 1;
       const bestStreak = Math.max(profile?.best_streak || 0, currentStreak);
 
@@ -83,7 +84,8 @@ export default function LogEntry() {
       if (streakXP > 0) events.push(`🔥 Тижневий стрік бонус! (+${streakXP} XP)`);
       if (dayMoney > 0) events.push(`💰 Заощаджено ${dayMoney} ₴`);
       newMilestones.filter(mi => !prevMilestones.includes(mi)).forEach(mi => {
-        events.push(`🏆 Новий мілстоун: ${MILESTONES[mi].label}!`);
+        const ms = MILESTONES.find(m => m.target === mi);
+        if (ms) events.push(`🏆 Новий мілстоун: ${ms.label}!`);
       });
       if (penaltyZone === "yellow") events.push("⚠️ Жовта зона — обережно!");
       if (penaltyZone === "red") events.push("🚨 Червона зона — привілеї заморожено на 5 днів!");
@@ -109,7 +111,8 @@ export default function LogEntry() {
         best_streak: bestStreak,
         current_weight: w,
         lowest_weight: lowestWeight,
-        start_weight: profile?.start_weight || 96,
+        start_weight: profile?.start_weight,
+        goal_weight: profile?.goal_weight,
         total_money_saved: totalMoney,
         total_steps: (profile?.total_steps || 0) + s,
         unlocked_milestones: allMilestones,
@@ -182,9 +185,60 @@ export default function LogEntry() {
     },
   });
 
+  const updateStepsMutation = useMutation({
+    mutationFn: async () => {
+      const newSteps = parseInt(stepsUpdate) || 0;
+      const oldSteps = todayLog?.steps || 0;
+
+      const oldStepsXP  = calculateStepsXP(oldSteps);
+      const newStepsXP  = calculateStepsXP(newSteps);
+      const deltaXP     = newStepsXP - oldStepsXP;
+      const oldMoney    = calculateStepsMoney(oldSteps);
+      const newMoney    = calculateStepsMoney(newSteps);
+      const deltaMoney  = newMoney - oldMoney;
+
+      // Rebuild events: drop old step event, add new one
+      const baseEvents = (todayLog?.events || []).filter(e => !e.includes('кроків'));
+      const newEvents  = [...baseEvents];
+      if (newStepsXP > 0) newEvents.push(`👟 ${newSteps.toLocaleString()} кроків (+${newStepsXP} XP)`);
+      if (deltaMoney > 0) {
+        // remove old money event if steps changed it
+        const moneyIdx = newEvents.findIndex(e => e.includes('Заощаджено'));
+        const totalMoney = newMoney;
+        if (moneyIdx >= 0) newEvents[moneyIdx] = `💰 Заощаджено ${totalMoney} ₴`;
+        else if (totalMoney > 0) newEvents.push(`💰 Заощаджено ${totalMoney} ₴`);
+      }
+
+      await base44.entities.DailyLog.update(todayLog.id, {
+        steps: newSteps,
+        xp_earned: (todayLog.xp_earned || 0) + deltaXP,
+        money_saved: (todayLog.money_saved || 0) + deltaMoney,
+        events: newEvents,
+      });
+
+      if (profile?.id) {
+        await base44.entities.PlayerProfile.update(profile.id, {
+          total_xp: (profile.total_xp || 0) + deltaXP,
+          total_steps: (profile.total_steps || 0) + (newSteps - oldSteps),
+          total_money_saved: (profile.total_money_saved || 0) + deltaMoney,
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["player-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-logs"] });
+      return { deltaXP, newSteps };
+    },
+    onSuccess: ({ deltaXP, newSteps }) => {
+      const msg = deltaXP > 0 ? `Кроки оновлено! +${deltaXP} XP 👟` : `Кроки оновлено: ${newSteps.toLocaleString()} 👟`;
+      toast.success(msg, { duration: 2500 });
+      setStepsUpdate("");
+    },
+  });
+
   if (todayLog) {
+    const canUpdateSteps = parseInt(stepsUpdate) > 0 && parseInt(stepsUpdate) !== (todayLog.steps || 0);
     return (
-      <div className="p-4 md:p-8 max-w-lg mx-auto">
+      <div className="p-4 md:p-8 max-w-lg mx-auto space-y-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -201,6 +255,64 @@ export default function LogEntry() {
             ))}
           </div>
           <p className="mt-6 text-xs text-muted-foreground">Повертайся завтра, воїне! ⚔️</p>
+        </motion.div>
+
+        {/* Evening steps update */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="rounded-2xl bg-card border border-border p-6"
+        >
+          <h3 className="font-pixel text-[10px] text-accent mb-4">👟 ВЕЧІРНІ КРОКИ</h3>
+          <div className="space-y-3">
+            <div>
+              <Label className="flex items-center gap-2 text-sm font-medium mb-2">
+                <Footprints className="w-4 h-4 text-primary" />
+                Кроки за сьогодні
+              </Label>
+              <Input
+                type="number"
+                placeholder={`Зараз: ${(todayLog.steps || 0).toLocaleString()}`}
+                value={stepsUpdate}
+                onChange={e => setStepsUpdate(e.target.value)}
+                className="bg-secondary border-border text-lg h-12"
+              />
+            </div>
+            {stepsUpdate && !isNaN(parseInt(stepsUpdate)) && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                className="rounded-xl bg-primary/5 border border-primary/20 p-3 flex items-center gap-2 text-sm"
+              >
+                <Zap className="w-4 h-4 text-accent" />
+                <span className="text-muted-foreground">Кроки XP:</span>
+                <span className="font-bold">
+                  {calculateStepsXP(parseInt(stepsUpdate) || 0)}
+                  {todayLog.steps > 0 && (
+                    <span className="text-xs text-muted-foreground ml-1">
+                      (було {calculateStepsXP(todayLog.steps)})
+                    </span>
+                  )}
+                </span>
+              </motion.div>
+            )}
+            <Button
+              className="w-full h-11 font-bold"
+              variant="outline"
+              onClick={() => updateStepsMutation.mutate()}
+              disabled={!canUpdateSteps || updateStepsMutation.isPending}
+            >
+              {updateStepsMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Оновити кроки
+                </>
+              )}
+            </Button>
+          </div>
         </motion.div>
       </div>
     );
@@ -257,7 +369,7 @@ export default function LogEntry() {
               <div className="flex items-center gap-2 text-sm">
                 <Zap className="w-4 h-4 text-accent" />
                 <span className="text-muted-foreground">Вага XP:</span>
-                <span className="font-bold">{calculateWeightXP(profile?.current_weight || 96, parseFloat(weight))}</span>
+                <span className="font-bold">{calculateWeightXP(profile?.current_weight ?? parseFloat(weight), parseFloat(weight))}</span>
               </div>
               {steps && (
                 <div className="flex items-center gap-2 text-sm">

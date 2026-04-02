@@ -8,13 +8,6 @@ import MilestoneTracker from "@/components/dashboard/MilestoneTracker";
 import StepGoals from "@/components/dashboard/StepGoals";
 import { format } from "date-fns";
 
-const DEFAULT_PROFILE = {
-  total_xp: 0, current_level: 1, current_streak: 0, best_streak: 0,
-  start_weight: 96, current_weight: 96, lowest_weight: 96,
-  total_money_saved: 0, total_steps: 0, unlocked_milestones: [],
-  unlocked_achievements: [], frozen_privileges: [], penalty_zone: "none",
-};
-
 export default function Dashboard() {
   const { data: profiles = [] } = useQuery({
     queryKey: ["player-profile"],
@@ -26,7 +19,7 @@ export default function Dashboard() {
     queryFn: () => base44.entities.DailyLog.list("-date", 60),
   });
 
-  const profile = profiles[0] || DEFAULT_PROFILE;
+  const profile = profiles[0] || {};
   const todayStr = format(new Date(), "yyyy-MM-dd");
   const todayLog = logs.find(l => l.date === todayStr);
 

@@ -114,6 +114,12 @@ export default function UserDetail() {
             </p>
             <PenaltyBadge zone={profile?.penalty_zone} />
           </div>
+          <GhostBtn onClick={() => act(() => api.admin.resetSteps(id), `Скинути кроки для ${user.username}?`)}>
+            <RotateCcw className="w-3.5 h-3.5" /> Кроки
+          </GhostBtn>
+          <GhostBtn onClick={() => act(() => api.admin.resetWeight(id), `Скинути вагу до старту для ${user.username}?`)}>
+            <RotateCcw className="w-3.5 h-3.5" /> Вага
+          </GhostBtn>
           <DangerBtn
             onClick={() => act(() => api.admin.resetUser(id), `Повністю скинути ${user.username}? Це видалить всі логи, інвентар та квести.`)}
           >

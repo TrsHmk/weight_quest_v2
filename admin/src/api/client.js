@@ -42,6 +42,8 @@ export const api = {
     deleteItem:     (uid, iid) => request('DELETE', `/admin/users/${uid}/inventory/${iid}`),
     clearInventory: (uid)      => request('DELETE', `/admin/users/${uid}/inventory`),
     addArtifact:    (uid, aid) => request('POST',   `/admin/users/${uid}/inventory`, { artifact_id: aid }),
+    resetSteps:     (uid)      => request('POST',   `/admin/users/${uid}/reset-steps`),
+    resetWeight:    (uid)      => request('POST',   `/admin/users/${uid}/reset-weight`),
     resetUser:      (uid)      => request('POST',   `/admin/users/${uid}/reset`),
   },
 };
