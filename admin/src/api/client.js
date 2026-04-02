@@ -33,9 +33,15 @@ export const api = {
     window.location.href = '/admin/login';
   },
   admin: {
-    stats: () => request('GET', '/admin/stats'),
-    users: (page = 1, limit = 20) =>
-      request('GET', `/admin/users?page=${page}&limit=${limit}`),
-    user: (id) => request('GET', `/admin/users/${id}`),
+    stats:          ()         => request('GET',    '/admin/stats'),
+    users:          (page = 1, limit = 20) =>
+                                  request('GET',    `/admin/users?page=${page}&limit=${limit}`),
+    user:           (id)       => request('GET',    `/admin/users/${id}`),
+    deleteLog:      (uid, lid) => request('DELETE', `/admin/users/${uid}/logs/${lid}`),
+    clearLogs:      (uid)      => request('DELETE', `/admin/users/${uid}/logs`),
+    deleteItem:     (uid, iid) => request('DELETE', `/admin/users/${uid}/inventory/${iid}`),
+    clearInventory: (uid)      => request('DELETE', `/admin/users/${uid}/inventory`),
+    addArtifact:    (uid, aid) => request('POST',   `/admin/users/${uid}/inventory`, { artifact_id: aid }),
+    resetUser:      (uid)      => request('POST',   `/admin/users/${uid}/reset`),
   },
 };
