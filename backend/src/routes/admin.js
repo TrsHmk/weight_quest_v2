@@ -146,11 +146,12 @@ router.post('/users/:userId/inventory', async (req, res) => {
   }
 });
 
-// POST /api/admin/users/:userId/reset-steps — zero out steps in profile only
+// POST /api/admin/users/:userId/reset-steps — zero out steps in profile + all logs
 router.post('/users/:userId/reset-steps', async (req, res) => {
   const { userId } = req.params;
   try {
     await db.query(`UPDATE player_profiles SET total_steps = 0 WHERE user_id = $1`, [userId]);
+    await db.query(`UPDATE daily_logs SET steps = 0 WHERE user_id = $1`, [userId]);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ message: 'Failed to reset steps' });
