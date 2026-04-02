@@ -13,6 +13,7 @@ import Journal from '@/pages/Journal';
 import Profile from '@/pages/Profile';
 import Inventory from '@/pages/Inventory';
 import Quests from '@/pages/Quests';
+import Stats from '@/pages/Stats';
 import Login from '@/pages/Login';
 
 const AuthenticatedApp = () => {
@@ -48,6 +49,7 @@ const AuthenticatedApp = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/inventory" element={<Inventory />} />
         <Route path="/quests" element={<Quests />} />
+        <Route path="/stats" element={<Stats />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>

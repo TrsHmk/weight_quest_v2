@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PenLine, Trophy, ScrollText, User, Swords, Backpack } from "lucide-react";
+import { LayoutDashboard, PenLine, Trophy, ScrollText, User, Swords, Backpack, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { path: "/achievements", icon: Trophy, label: "Досягнення" },
   { path: "/journal", icon: ScrollText, label: "Журнал" },
   { path: "/inventory", icon: Backpack, label: "Інвентар" },
+  { path: "/stats", icon: BarChart3, label: "Статистика" },
   { path: "/profile", icon: User, label: "Профіль" },
 ];
 
