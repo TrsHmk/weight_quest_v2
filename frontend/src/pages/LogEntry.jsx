@@ -61,7 +61,7 @@ export default function LogEntry() {
       const penaltyZone = getPenaltyZone(w, lowestWeight);
 
       // Milestones
-      const newMilestones = getUnlockedMilestones(w).map(m => m.index);
+      const newMilestones = getUnlockedMilestones(w).map(m => m.target);
       const prevMilestones = profile?.unlocked_milestones || [];
       const allMilestones = [...new Set([...prevMilestones, ...newMilestones])];
 

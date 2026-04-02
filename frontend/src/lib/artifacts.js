@@ -448,6 +448,90 @@ export const CHESTS = [
   },
 ];
 
+export const ARTIFACT_SETS = [
+  {
+    id: 'total_skuf',
+    name: 'Тотальний Скуф',
+    icon: '🍺',
+    desc: 'Зібрав увесь набір справжнього скуфа. Нація впізнає свого.',
+    pieces: ['skuf_belly', 'dirty_underpants', 'kovbasa_sandwich'],
+    bonus: 'Жиробас 3 Рівня: +200 XP але зроби 30 присідань і поважай себе',
+    bonusType: 'debuff_quest_bonus',
+  },
+  {
+    id: 'simp_normis',
+    name: 'Сімп Норміс',
+    icon: '🧣',
+    desc: 'Мама схвалює. Подружка не знає. Інстаграм в курсі.',
+    pieces: ['mamas_towel', 'motivation_post', 'gym_selfie'],
+    bonus: 'Схвалений Мамою: стрік захищено 3 дні + +300 XP',
+    bonusType: 'streak_shield',
+  },
+  {
+    id: 'sigma_grindset',
+    name: 'Сигма Грайндсет',
+    icon: '😤',
+    desc: 'Одиночка. Хижак. Дієта без компромісів.',
+    pieces: ['gigachad_aura', 'gigachad_aura_max', 'zaluzhnyi_cap'],
+    bonus: 'Сигма Максимум: +500 XP та всі штрафи знімаються на 3 дні',
+    bonusType: 'legendary_buff',
+  },
+  {
+    id: 'cossack_glory',
+    name: 'Козацька Слава',
+    icon: '🚜',
+    desc: 'Чотири символи сили. Запорізька Січ схвалила твій фітнес.',
+    pieces: ['zsu_tractor', 'cossack_kettlebell', 'zaporizhian_trousers', 'heavenly_trident'],
+    bonus: '+2000 XP миттєво. Предки зі степу пишаються і плачуть.',
+    bonusType: 'xp_bonus',
+  },
+  {
+    id: 'beer_puzzle',
+    name: 'Пивний Пазл',
+    icon: '🍻',
+    desc: 'Три артефакти — одна велика любов до напою.',
+    pieces: ['lviv_beer', 'cossack_pipe', 'homemade_mead'],
+    bonus: 'Тиждень Свободи: пиво та алкоголь без штрафів 7 днів',
+    bonusType: 'allow_beer',
+  },
+  {
+    id: 'dream_dietologist',
+    name: 'Дієтолог Мрії',
+    icon: '📋',
+    desc: 'Ти знаєш більше за лікаря. І менше їси за нього.',
+    pieces: ['calorie_notebook', 'buckwheat_diet', 'healthy_recipe'],
+    bonus: 'Ліцензія Здоров\'я: всі харчові штрафи знімаються на 14 днів',
+    bonusType: 'legendary_buff',
+  },
+  {
+    id: 'olympic_team',
+    name: 'Олімпійська Збірна',
+    icon: '🏅',
+    desc: 'Чотири атрибути спортсмена. Золото для України.',
+    pieces: ['running_watch', 'hiking_boots', 'marathon_trophy', 'gold_headphones'],
+    bonus: 'Золота Медаль: 2x XP за кроки та +500 XP бонус',
+    bonusType: 'legendary_buff',
+  },
+  {
+    id: 'fate_master',
+    name: 'Майстер Долі',
+    icon: '🎲',
+    desc: 'Три рандомних артефакти — одна непередбачувана людина.',
+    pieces: ['fate_finger', 'pandora_box', 'expired_kefir'],
+    bonus: 'Улюбленець Долі: наступний гембл-ефект завжди дає максимум',
+    bonusType: 'gamble',
+  },
+];
+
+export function checkSets(inventoryItems) {
+  const owned = new Set(inventoryItems.map(i => i.artifact_id));
+  return ARTIFACT_SETS.map(set => ({
+    ...set,
+    ownedCount: set.pieces.filter(p => owned.has(p)).length,
+    completed: set.pieces.every(p => owned.has(p)),
+  }));
+}
+
 export const RARITY_CONFIG = {
   common:    { label: 'Звичайний',   color: 'text-slate-400',   border: 'border-slate-600',    bg: 'bg-slate-800/30',    glow: '' },
   uncommon:  { label: 'Незвичайний', color: 'text-green-400',   border: 'border-green-600/60', bg: 'bg-green-900/20',   glow: '' },

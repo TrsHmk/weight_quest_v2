@@ -20,14 +20,14 @@ export default function MilestoneTracker({ profile }) {
     >
       <h3 className="font-pixel text-[10px] text-accent mb-4">🎯 МІЛСТОУНИ</h3>
       <div className="space-y-3">
-        {MILESTONES.map((m, i) => {
-          const unlocked = unlockedSet.has(i);
-          const frozen = frozenMap[i];
+        {MILESTONES.map((m) => {
+          const unlocked = unlockedSet.has(m.target);
+          const frozen = frozenMap[m.target];
           const isFrozen = frozen && new Date(frozen) > new Date();
 
           return (
             <div
-              key={i}
+              key={m.target}
               className={cn(
                 "flex items-center gap-3 p-3 rounded-xl border transition-all",
                 unlocked && !isFrozen && "bg-primary/5 border-primary/20",

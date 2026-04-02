@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Backpack, Sparkles, CheckCircle2, Loader2, Package } from "lucide-react";
+import { Backpack, Sparkles, CheckCircle2, Loader2, Package, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ARTIFACTS, RARITY_CONFIG, getArtifact, getChest, getItem, openChest } from "@/lib/artifacts";
+import { ARTIFACTS, RARITY_CONFIG, getArtifact, getChest, getItem, openChest, checkSets, ARTIFACT_SETS } from "@/lib/artifacts";
 
 function ArtifactCard({ item, onUse, isUsing }) {
   const artifact = getArtifact(item.artifact_id);
@@ -136,6 +136,86 @@ function ChestReveal({ artifact, onClose }) {
   );
 }
 
+function SetCard({ set }) {
+  const completed = set.completed;
+  const progress = set.ownedCount / set.pieces.length;
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`rounded-xl border p-4 flex flex-col gap-3 transition-all
+        ${completed
+          ? 'border-yellow-400/80 bg-yellow-900/20 shadow-yellow-400/30 shadow-md'
+          : 'border-border bg-card'}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-3xl">{set.icon}</span>
+          <div>
+            <p className={`font-bold text-sm ${completed ? 'text-yellow-400' : 'text-foreground'}`}>
+              {set.name}
+            </p>
+            <p className="text-xs text-muted-foreground">{set.desc}</p>
+          </div>
+        </div>
+        {completed && (
+          <span className="font-pixel text-[9px] text-yellow-400 uppercase tracking-widest shrink-0">Сет!</span>
+        )}
+      </div>
+
+      {/* Pieces */}
+      <div className="flex gap-1.5 flex-wrap">
+        {set.pieces.map(pid => {
+          const art = ARTIFACTS.find(a => a.id === pid);
+          const owned = set.ownedCount > 0 && set.pieces.slice(0, set.ownedCount).includes(pid);
+          // check if this specific piece is owned
+          const pieceOwned = set._ownedSet?.has(pid) ?? false;
+          return (
+            <div
+              key={pid}
+              title={art?.name || pid}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center text-base
+                ${pieceOwned ? 'bg-primary/15 border border-primary/30' : 'bg-secondary border border-border opacity-40'}`}
+            >
+              {art?.icon || '❓'}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Progress bar */}
+      <div>
+        <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+          <span>{set.ownedCount}/{set.pieces.length} частин</span>
+          {completed && <span className="text-yellow-400">✓ Виконано!</span>}
+        </div>
+        <div className="h-1.5 rounded-full bg-black/20 overflow-hidden">
+          <motion.div
+            className={`h-full rounded-full ${completed ? 'bg-yellow-400' : 'bg-primary'}`}
+            initial={{ width: 0 }}
+            animate={{ width: `${progress * 100}%` }}
+            transition={{ duration: 0.6 }}
+          />
+        </div>
+      </div>
+
+      {/* Bonus */}
+      {completed && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="rounded-lg bg-yellow-900/30 border border-yellow-400/40 px-3 py-2"
+        >
+          <p className="text-[10px] font-pixel text-yellow-400 mb-1">🎁 БОНУС СЕТУ</p>
+          <p className="text-xs text-yellow-300">{set.bonus}</p>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
 export default function Inventory() {
   const [usingId, setUsingId] = useState(null);
   const [openingItem, setOpeningItem] = useState(null);
@@ -191,6 +271,11 @@ export default function Inventory() {
   const activeArtifacts = items.filter(i => !i.used && getArtifact(i.artifact_id));
   const usedArtifacts = items.filter(i => i.used && getArtifact(i.artifact_id));
 
+  const ownedArtifactIds = new Set(items.map(i => i.artifact_id));
+  const sets = checkSets(items).map(s => ({ ...s, _ownedSet: ownedArtifactIds }));
+  const completedSets = sets.filter(s => s.completed);
+  const incompleteSets = sets.filter(s => !s.completed);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -214,6 +299,29 @@ export default function Inventory() {
           <p className="text-xs text-muted-foreground">Артефакти та скрині, що впали під час подорожі</p>
         </div>
       </div>
+
+      {/* Sets section */}
+      {completedSets.length > 0 && (
+        <section className="mb-10">
+          <h2 className="font-pixel text-[10px] text-yellow-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <Layers className="w-3 h-3" /> Активні Сети ({completedSets.length}) 🔥
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {completedSets.map(set => <SetCard key={set.id} set={set} />)}
+          </div>
+        </section>
+      )}
+
+      {incompleteSets.filter(s => s.ownedCount > 0).length > 0 && (
+        <section className="mb-10">
+          <h2 className="font-pixel text-[10px] text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+            <Layers className="w-3 h-3" /> Сети в процесі
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {incompleteSets.filter(s => s.ownedCount > 0).map(set => <SetCard key={set.id} set={set} />)}
+          </div>
+        </section>
+      )}
 
       {items.length === 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20 text-muted-foreground">
