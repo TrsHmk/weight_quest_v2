@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Loader2, BarChart3, Package, Swords, Trophy } from "lucide-react";
 import { ARTIFACTS, CHESTS, RARITY_CONFIG } from "@/lib/artifacts";
+import ArtifactIcon from "@/components/ArtifactIcon";
 import { DIFFICULTY_CONFIG } from "@/lib/quests";
 
 const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
@@ -217,7 +218,7 @@ export default function Stats() {
             animate={{ opacity: 1, scale: 1 }}
             className={`rounded-xl border-2 p-5 flex items-center gap-4 ${RARITY_CONFIG.legendary.border} ${RARITY_CONFIG.legendary.bg} ${RARITY_CONFIG.legendary.glow}`}
           >
-            <span className="text-5xl">{legendaryOwned.art.icon}</span>
+            <ArtifactIcon icon={legendaryOwned.art.icon} alt={legendaryOwned.art.name} size="w-14 h-14" />
             <div>
               <p className="font-bold text-foreground text-lg">{legendaryOwned.art.name}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{legendaryOwned.art.desc}</p>

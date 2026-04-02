@@ -6,6 +6,7 @@ import { Backpack, Sparkles, CheckCircle2, Loader2, Package, Layers } from "luci
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ARTIFACTS, RARITY_CONFIG, getArtifact, getChest, getItem, openChest, checkSets, ARTIFACT_SETS } from "@/lib/artifacts";
+import ArtifactIcon from "@/components/ArtifactIcon";
 
 function ArtifactCard({ item, onUse, isUsing }) {
   const artifact = getArtifact(item.artifact_id);
@@ -21,7 +22,7 @@ function ArtifactCard({ item, onUse, isUsing }) {
       className={`relative rounded-xl border p-4 flex flex-col gap-2 ${cfg.border} ${cfg.bg} ${cfg.glow} ${item.used ? 'opacity-40 grayscale' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-3xl">{artifact.icon}</span>
+        <ArtifactIcon icon={artifact.icon} alt={artifact.name} size="w-10 h-10" />
         <span className={`text-[9px] font-pixel uppercase tracking-widest ${cfg.color}`}>{cfg.label}</span>
       </div>
       <div>
@@ -62,13 +63,12 @@ function ChestCard({ item, onOpen, isOpening }) {
       className={`relative rounded-xl border p-4 flex flex-col gap-2 ${cfg.border} ${cfg.bg} ${cfg.glow} ${item.used ? 'opacity-40 grayscale' : ''}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <motion.span
-          className="text-3xl"
+        <motion.div
           animate={isOpening ? { rotate: [0, -10, 10, -10, 10, 0], scale: [1, 1.2, 1.2, 1.2, 1.2, 1] } : {}}
           transition={{ duration: 0.6 }}
         >
-          {chest.icon}
-        </motion.span>
+          <ArtifactIcon icon={chest.icon} alt={chest.name} size="w-10 h-10" />
+        </motion.div>
         <span className={`text-[9px] font-pixel uppercase tracking-widest ${cfg.color}`}>{cfg.label}</span>
       </div>
       <div>
@@ -120,9 +120,9 @@ function ChestReveal({ artifact, onClose }) {
         <motion.div
           animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
           transition={{ duration: 1, repeat: Infinity, repeatDelay: 1 }}
-          className="text-6xl mb-4"
+          className="flex justify-center mb-4"
         >
-          {artifact.icon}
+          <ArtifactIcon icon={artifact.icon} alt={artifact.name} size="w-20 h-20" />
         </motion.div>
         <p className={`font-pixel text-[10px] uppercase tracking-widest mb-2 ${cfg.color}`}>
           ✨ {cfg.label} артефакт!
