@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, RotateCcw, Plus, X, Pencil } from 'lucide-react';
+import { ArrowLeft, Trash2, RotateCcw, Plus, X, Pencil, Search } from 'lucide-react';
+import { ITEM_CATALOG, RARITY_LABELS } from '../lib/itemCatalog';
 import { format } from 'date-fns';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
@@ -106,6 +107,7 @@ export default function UserDetail() {
   const [busy, setBusy]         = useState(false);
   const [addArtId, setAddArtId] = useState('');
   const [showAddArt, setShowAddArt] = useState(false);
+  const [artSearch, setArtSearch] = useState('');
 
   const reload = () => {
     setLoading(true);
@@ -308,21 +310,71 @@ export default function UserDetail() {
         </div>
 
         {showAddArt && (
-          <div className="px-5 py-3 border-b border-slate-800 flex items-center gap-2 bg-slate-800/40">
-            <input
-              value={addArtId}
-              onChange={e => setAddArtId(e.target.value)}
-              placeholder="artifact_id або chest_id (напр. gigachad_aura)"
-              className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 outline-none focus:border-indigo-500"
-            />
-            <GhostBtn onClick={() => {
-              if (!addArtId.trim()) return;
-              act(() => api.admin.addArtifact(id, addArtId.trim()));
-              setAddArtId('');
-              setShowAddArt(false);
-            }}>
-              Додати
-            </GhostBtn>
+          <div className="px-5 py-3 border-b border-slate-800 bg-slate-800/40 space-y-2">
+            {/* Search input */}
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+              <input
+                value={artSearch}
+                onChange={e => { setArtSearch(e.target.value); setAddArtId(''); }}
+                placeholder="Пошук за назвою або ID..."
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 outline-none focus:border-indigo-500"
+                autoFocus
+              />
+            </div>
+            {/* Scrollable list */}
+            <div className="max-h-56 overflow-y-auto rounded-lg border border-slate-700 divide-y divide-slate-800">
+              {ITEM_CATALOG
+                .filter(item =>
+                  !artSearch ||
+                  item.name.toLowerCase().includes(artSearch.toLowerCase()) ||
+                  item.id.includes(artSearch.toLowerCase())
+                )
+                .map(item => {
+                  const rarityColor = {
+                    common: 'text-slate-400', uncommon: 'text-green-400',
+                    rare: 'text-blue-400', epic: 'text-purple-400', legendary: 'text-yellow-400',
+                  }[item.rarity] || 'text-slate-400';
+                  const isSelected = addArtId === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setAddArtId(isSelected ? '' : item.id)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-xs text-left transition-colors
+                        ${isSelected ? 'bg-indigo-900/50 border-l-2 border-indigo-500' : 'hover:bg-slate-800/80'}`}
+                    >
+                      {item.icon ? (
+                        <img src={item.icon} alt="" className="w-7 h-7 object-contain shrink-0" style={{ imageRendering: 'pixelated' }} />
+                      ) : (
+                        <div className="w-7 h-7 shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-slate-200 font-medium">{item.name}</span>
+                        <span className="ml-2 text-slate-600 font-mono">{item.id}</span>
+                      </div>
+                      <span className={`shrink-0 ${rarityColor}`}>{RARITY_LABELS[item.rarity]}</span>
+                    </button>
+                  );
+                })
+              }
+            </div>
+            {/* Action row */}
+            <div className="flex items-center gap-2 pt-1">
+              <span className="flex-1 text-xs text-slate-500 truncate">
+                {addArtId ? `Вибрано: ${addArtId}` : 'Вибери айтем зі списку'}
+              </span>
+              <GhostBtn onClick={() => {
+                if (!addArtId) return;
+                act(() => api.admin.addArtifact(id, addArtId));
+                setAddArtId(''); setArtSearch(''); setShowAddArt(false);
+              }}>
+                Додати
+              </GhostBtn>
+              <button onClick={() => { setShowAddArt(false); setArtSearch(''); setAddArtId(''); }}
+                className="text-slate-600 hover:text-slate-400 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 

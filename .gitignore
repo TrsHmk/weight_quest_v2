@@ -21,4 +21,4 @@ npm-debug.log*
 # Spritesheet cutter artifacts
 spritesheet.png
 debug_grid.png
-icons/
+/icons/

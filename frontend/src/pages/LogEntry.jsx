@@ -15,6 +15,9 @@ import {
   calculateStreakXP, getPenaltyZone, getLevelForXP,
   getUnlockedMilestones, MILESTONES,
 } from "@/lib/gameConfig";
+import {
+  checkStreakRewards, checkWeightRewards, checkStepRewards, pickPunishment,
+} from "@/lib/rewardsConfig";
 
 export default function LogEntry() {
   const [weight, setWeight] = useState("");
@@ -142,6 +145,77 @@ export default function LogEntry() {
       if (penaltyZone === "yellow") events.push("⚠️ Жовта зона — обережно!");
       if (penaltyZone === "red") events.push("🚨 Червона зона — привілеї заморожено на 5 днів!");
 
+      // ── Rewards & Challenges ──
+      const existingChallenges = [...(profile?.challenges || [])];
+      const earnedIds = new Set(existingChallenges.map(c => c.id));
+      const newChallenges = [];
+
+      // Streak rewards
+      const streakRewards = checkStreakRewards(currentStreak, earnedIds);
+      streakRewards.forEach(r => {
+        newChallenges.push({ ...r, type: 'reward', claimed: false, earned_at: todayStr });
+        events.push(`🎁 НАГОРОДА: ${r.icon} ${r.title}!`);
+      });
+
+      // Weight loss rewards
+      const weightRewards = checkWeightRewards(profile?.start_weight || w, w, earnedIds);
+      weightRewards.forEach(r => {
+        newChallenges.push({ ...r, type: 'reward', claimed: false, earned_at: todayStr });
+        events.push(`🎁 НАГОРОДА: ${r.icon} ${r.title}!`);
+      });
+
+      // Step rewards (daily, not persistent)
+      const todayEarnedSteps = new Set(existingChallenges.filter(c => c.earned_at === todayStr).map(c => c.id));
+      const stepRewards = checkStepRewards(s, todayEarnedSteps);
+      stepRewards.forEach(r => {
+        if (!earnedIds.has(r.id + '_' + todayStr)) {
+          newChallenges.push({ ...r, id: r.id + '_' + todayStr, type: 'reward', claimed: false, earned_at: todayStr });
+          events.push(`🎁 НАГОРОДА: ${r.icon} ${r.title}!`);
+        }
+      });
+
+      // Punishments
+      const weightWentUp = w > prevWeight;
+      const weightUpBig = w - prevWeight >= 1;
+
+      if (weightUpBig) {
+        const p = pickPunishment('weight_up_big');
+        if (p) {
+          newChallenges.push({ ...p, id: p.id + '_' + todayStr, type: 'challenge', completed: false, assigned_at: todayStr });
+          events.push(`😤 ЧЕЛЕНДЖ: ${p.icon} ${p.title}`);
+        }
+      } else if (weightWentUp) {
+        const p = pickPunishment('weight_up');
+        if (p) {
+          newChallenges.push({ ...p, id: p.id + '_' + todayStr, type: 'challenge', completed: false, assigned_at: todayStr });
+          events.push(`😤 ЧЕЛЕНДЖ: ${p.icon} ${p.title}`);
+        }
+      }
+
+      if (currentStreak === 1 && (profile?.current_streak || 0) > 1) {
+        const p = pickPunishment('streak_break');
+        if (p) {
+          newChallenges.push({ ...p, id: p.id + '_' + todayStr, type: 'challenge', completed: false, assigned_at: todayStr });
+          events.push(`😤 ЧЕЛЕНДЖ: ${p.icon} ${p.title}`);
+        }
+      }
+
+      if (penaltyZone === 'yellow') {
+        const p = pickPunishment('yellow_zone');
+        if (p) {
+          newChallenges.push({ ...p, id: p.id + '_' + todayStr, type: 'challenge', completed: false, assigned_at: todayStr });
+          events.push(`😤 ЧЕЛЕНДЖ: ${p.icon} ${p.title}`);
+        }
+      } else if (penaltyZone === 'red') {
+        const p = pickPunishment('red_zone');
+        if (p) {
+          newChallenges.push({ ...p, id: p.id + '_' + todayStr, type: 'challenge', completed: false, assigned_at: todayStr });
+          events.push(`😤 ЧЕЛЕНДЖ: ${p.icon} ${p.title}`);
+        }
+      }
+
+      const allChallenges = [...existingChallenges, ...newChallenges];
+
       // Create daily log
       await base44.entities.DailyLog.create({
         date: todayStr,
@@ -172,6 +246,7 @@ export default function LogEntry() {
         frozen_privileges: frozenPrivileges,
         penalty_zone: penaltyZone,
         active_effects: activeEffects,
+        challenges: allChallenges,
       };
 
       if (profile?.id) {
@@ -183,10 +258,21 @@ export default function LogEntry() {
       queryClient.invalidateQueries({ queryKey: ["player-profile"] });
       queryClient.invalidateQueries({ queryKey: ["daily-logs"] });
 
-      return { totalDayXP, events, currentStreak, penaltyZone, steps: parseInt(steps) || 0, weight: parseFloat(weight), prevWeight: profile?.current_weight || null };
+      return { totalDayXP, events, currentStreak, penaltyZone, steps: parseInt(steps) || 0, weight: parseFloat(weight), prevWeight: profile?.current_weight || null, newChallenges };
     },
     onSuccess: (data) => {
       toast.success(`День записано! +${data.totalDayXP} XP ⚔️`, { duration: 2000 });
+
+      // Show reward/challenge toasts
+      data.newChallenges.forEach((ch, idx) => {
+        setTimeout(() => {
+          if (ch.type === 'reward') {
+            toast(`🎁 ${ch.icon} ${ch.title}`, { description: ch.desc, duration: 8000 });
+          } else {
+            toast.error(`😤 ${ch.icon} ${ch.title}`, { description: ch.desc, duration: 8000 });
+          }
+        }, 800 + idx * 700);
+      });
 
       // Roll for artifact drop
       const artifact = rollArtifact();

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Scale, Target, Swords, Loader2 } from "lucide-react";
+import { Scale, Target, Swords, Loader2, Ruler } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,17 +10,20 @@ import { Label } from "@/components/ui/label";
 export default function Onboarding() {
   const [startWeight, setStartWeight] = useState("");
   const [goalWeight, setGoalWeight] = useState("");
+  const [height, setHeight] = useState("");
   const queryClient = useQueryClient();
 
   const createProfile = useMutation({
     mutationFn: async () => {
       const sw = parseFloat(startWeight);
       const gw = parseFloat(goalWeight);
+      const h = parseInt(height);
       await base44.entities.PlayerProfile.create({
         start_weight: sw,
         current_weight: sw,
         lowest_weight: sw,
         goal_weight: gw,
+        height: h > 0 ? h : null,
         total_xp: 0,
         current_level: 1,
         current_streak: 0,
@@ -40,7 +43,8 @@ export default function Onboarding() {
 
   const sw = parseFloat(startWeight);
   const gw = parseFloat(goalWeight);
-  const valid = !isNaN(sw) && !isNaN(gw) && sw > 0 && gw > 0 && gw < sw;
+  const h  = parseInt(height);
+  const valid = !isNaN(sw) && !isNaN(gw) && sw > 0 && gw > 0 && gw < sw && !isNaN(h) && h >= 100 && h <= 250;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
@@ -72,6 +76,20 @@ export default function Onboarding() {
               placeholder="Наприклад: 96.0"
               value={startWeight}
               onChange={e => setStartWeight(e.target.value)}
+              className="bg-secondary border-border text-lg h-12"
+            />
+          </div>
+
+          <div>
+            <Label className="flex items-center gap-2 text-sm font-medium mb-2">
+              <Ruler className="w-4 h-4 text-primary" />
+              Зріст (см)
+            </Label>
+            <Input
+              type="number"
+              placeholder="Наприклад: 178"
+              value={height}
+              onChange={e => setHeight(e.target.value)}
               className="bg-secondary border-border text-lg h-12"
             />
           </div>

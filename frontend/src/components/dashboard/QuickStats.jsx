@@ -1,7 +1,16 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { TrendingDown, Footprints, Banknote, AlertTriangle } from "lucide-react";
+import { TrendingDown, Footprints, Banknote, AlertTriangle, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+function getBmiCategory(bmi) {
+  if (bmi < 18.5) return { label: "Дрищ 💀",              color: "text-blue-400" };
+  if (bmi < 25)   return { label: "Норм пацан ✅",         color: "text-green-400" };
+  if (bmi < 30)   return { label: "Злегка пузатий 🍺",    color: "text-yellow-500" };
+  if (bmi < 35)   return { label: "Скуф I ступеня 🧔",    color: "text-orange-500" };
+  if (bmi < 40)   return { label: "Скуф II ступеня 🐷",   color: "text-red-500" };
+  return           { label: "Легендарний Скуф 👑",         color: "text-red-700" };
+}
 
 function StatCard({ icon: Icon, label, value, color, delay, alert }) {
   return (
@@ -35,9 +44,12 @@ function StatCard({ icon: Icon, label, value, color, delay, alert }) {
 
 export default function QuickStats({ profile }) {
   const weightLost = Math.max(0, (profile.start_weight || 96) - (profile.current_weight || 96));
+  const height = profile.height;
+  const bmi = height ? (profile.current_weight || 96) / ((height / 100) ** 2) : null;
+  const bmiCat = bmi ? getBmiCategory(bmi) : null;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className={cn("grid gap-3", bmi ? "grid-cols-2 lg:grid-cols-5" : "grid-cols-2 lg:grid-cols-4")}>
       <StatCard
         icon={TrendingDown}
         label="Скинуто"
@@ -67,6 +79,21 @@ export default function QuickStats({ profile }) {
         delay={0.2}
         alert={profile.penalty_zone}
       />
+      {bmi && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.25 }}
+          className="rounded-xl bg-card border border-border p-4"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Activity className={cn("w-4 h-4", bmiCat.color)} />
+            <span className="text-xs text-muted-foreground">ІМТ</span>
+          </div>
+          <p className="text-xl font-bold text-foreground">{bmi.toFixed(1)}</p>
+          <p className={cn("text-[10px] mt-1 font-medium", bmiCat.color)}>{bmiCat.label}</p>
+        </motion.div>
+      )}
     </div>
   );
 }

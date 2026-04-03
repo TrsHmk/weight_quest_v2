@@ -1,13 +1,23 @@
-import React from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { LEVELS, MILESTONES, ACHIEVEMENTS, getLevelForXP } from "@/lib/gameConfig";
 import { Progress } from "@/components/ui/progress";
 import {
   Trophy, Flame, Footprints, Banknote, TrendingDown,
-  Zap, Star, Target, Scale
+  Zap, Star, Target, Scale, Ruler, Activity, Pencil, Check, X
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+
+function getBmiCategory(bmi) {
+  if (bmi < 18.5) return { label: "Дрищ 💀",              color: "text-blue-400" };
+  if (bmi < 25)   return { label: "Норм пацан ✅",         color: "text-green-400" };
+  if (bmi < 30)   return { label: "Злегка пузатий 🍺",    color: "text-yellow-500" };
+  if (bmi < 35)   return { label: "Скуф I ступеня 🧔",    color: "text-orange-500" };
+  if (bmi < 40)   return { label: "Скуф II ступеня 🐷",   color: "text-red-500" };
+  return           { label: "Легендарний Скуф 👑",         color: "text-red-700" };
+}
 
 function StatRow({ icon: Icon, label, value, color }) {
   return (
@@ -22,6 +32,10 @@ function StatRow({ icon: Icon, label, value, color }) {
 }
 
 export default function Profile() {
+  const queryClient = useQueryClient();
+  const [editingHeight, setEditingHeight] = useState(false);
+  const [heightDraft, setHeightDraft] = useState("");
+
   const { data: profiles = [] } = useQuery({
     queryKey: ["player-profile"],
     queryFn: () => base44.entities.PlayerProfile.list(),
@@ -33,6 +47,14 @@ export default function Profile() {
   });
 
   const profile = profiles[0];
+
+  const heightMutation = useMutation({
+    mutationFn: (h) => base44.entities.PlayerProfile.update(profile.id, { height: h }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["player-profile"] });
+      setEditingHeight(false);
+    },
+  });
 
   const level = getLevelForXP(profile?.total_xp || 0);
   const weightLost = Math.max(0, (profile?.start_weight || 0) - (profile?.current_weight || 0));
@@ -100,6 +122,59 @@ export default function Profile() {
         <h3 className="font-pixel text-[10px] text-accent mb-4">📈 СТАТИСТИКА</h3>
         <StatRow icon={Zap} label="Загальний XP" value={profile?.total_xp || 0} color="text-accent" />
         <StatRow icon={Scale} label="Поточна вага" value={`${(profile?.current_weight || 0).toFixed(1)} кг`} color="text-foreground" />
+        {/* Height row with inline edit */}
+        <div className="flex items-center justify-between py-3 border-b border-border">
+          <div className="flex items-center gap-3">
+            <Ruler className="w-4 h-4 text-primary" />
+            <span className="text-sm text-muted-foreground">Зріст</span>
+          </div>
+          {editingHeight ? (
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={heightDraft}
+                onChange={e => setHeightDraft(e.target.value)}
+                className="h-7 w-20 text-sm px-2 bg-secondary"
+                placeholder="см"
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Enter') { const h = parseInt(heightDraft); if (h >= 100 && h <= 250) heightMutation.mutate(h); }
+                  if (e.key === 'Escape') setEditingHeight(false);
+                }}
+              />
+              <button onClick={() => { const h = parseInt(heightDraft); if (h >= 100 && h <= 250) heightMutation.mutate(h); }}
+                className="text-green-400 hover:text-green-300"><Check className="w-4 h-4" /></button>
+              <button onClick={() => setEditingHeight(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-4 h-4" /></button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-foreground">
+                {profile?.height ? `${profile.height} см` : "—"}
+              </span>
+              <button onClick={() => { setHeightDraft(profile?.height ? String(profile.height) : ""); setEditingHeight(true); }}
+                className="text-muted-foreground hover:text-primary transition-colors">
+                <Pencil className="w-3.5 h-3.5" /></button>
+            </div>
+          )}
+        </div>
+        {/* BMI row */}
+        {profile?.height && profile?.current_weight && (() => {
+          const bmi = profile.current_weight / ((profile.height / 100) ** 2);
+          const cat = getBmiCategory(bmi);
+          return (
+            <div className="flex items-center justify-between py-3 border-b border-border">
+              <div className="flex items-center gap-3">
+                <Activity className={`w-4 h-4 ${cat.color}`} />
+                <span className="text-sm text-muted-foreground">ІМТ</span>
+              </div>
+              <div className="text-right">
+                <span className="text-sm font-bold text-foreground">{bmi.toFixed(1)}</span>
+                <span className={`ml-2 text-xs ${cat.color}`}>{cat.label}</span>
+              </div>
+            </div>
+          );
+        })()}
         <StatRow icon={TrendingDown} label="Скинуто" value={`${weightLost.toFixed(1)} кг`} color="text-green-400" />
         {profile?.goal_weight && (
           <StatRow icon={Target} label="Ціль" value={`${profile.goal_weight.toFixed(1)} кг`} color="text-accent" />
