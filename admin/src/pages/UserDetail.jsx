@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trash2, RotateCcw, Plus, X } from 'lucide-react';
+import { ArrowLeft, Trash2, RotateCcw, Plus, X, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
@@ -44,6 +44,56 @@ function GhostBtn({ onClick, children }) {
       className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate-400 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
     >
       {children}
+    </button>
+  );
+}
+
+function EditableCell({ value, onSave, step, suffix = '' }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef(null);
+
+  function startEdit() {
+    setDraft(String(value));
+    setEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  }
+
+  function commit() {
+    const parsed = step === 1 ? parseInt(draft) : parseFloat(draft);
+    if (!isNaN(parsed) && parsed !== value) onSave(parsed);
+    setEditing(false);
+  }
+
+  function onKeyDown(e) {
+    if (e.key === 'Enter') commit();
+    if (e.key === 'Escape') setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        step={step}
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={onKeyDown}
+        className="w-20 bg-slate-700 border border-indigo-500 rounded px-1.5 py-0.5 text-xs text-slate-100 outline-none"
+        autoFocus
+      />
+    );
+  }
+
+  return (
+    <button
+      onClick={startEdit}
+      className="flex items-center gap-1 group/cell hover:text-indigo-300 transition-colors"
+      title="Клікни щоб редагувати"
+    >
+      <span>{value}{suffix}</span>
+      <Pencil className="w-3 h-3 opacity-0 group-hover/cell:opacity-60 transition-opacity" />
     </button>
   );
 }
@@ -199,8 +249,21 @@ export default function UserDetail() {
                     <td className="px-4 py-2.5 text-slate-400 text-xs font-mono">
                       {format(new Date(log.date + 'T00:00:00'), 'dd.MM.yyyy')}
                     </td>
-                    <td className="px-4 py-2.5 font-medium text-slate-200">{log.weight} кг</td>
-                    <td className="px-4 py-2.5 text-slate-400">{(log.steps || 0).toLocaleString()}</td>
+                    <td className="px-4 py-2.5 font-medium text-slate-200">
+                      <EditableCell
+                        value={parseFloat(log.weight)}
+                        step={0.1}
+                        suffix=" кг"
+                        onSave={val => act(() => api.admin.updateLog(id, log.id, { weight: val }))}
+                      />
+                    </td>
+                    <td className="px-4 py-2.5 text-slate-400">
+                      <EditableCell
+                        value={log.steps || 0}
+                        step={1}
+                        onSave={val => act(() => api.admin.updateLog(id, log.id, { steps: val }))}
+                      />
+                    </td>
                     <td className="px-4 py-2.5">
                       {log.xp_earned > 0 && <span className="text-xs text-indigo-400">+{log.xp_earned}</span>}
                     </td>

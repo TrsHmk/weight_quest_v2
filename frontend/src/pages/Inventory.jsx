@@ -12,6 +12,7 @@ function ArtifactCard({ item, onUse, isUsing }) {
   const artifact = getArtifact(item.artifact_id);
   if (!artifact) return null;
   const cfg = RARITY_CONFIG[artifact.rarity];
+  const isPassive = ['streak_shield','penalty_immunity','xp_multiplier','weight_reduce','legendary_buff'].includes(artifact.type);
 
   return (
     <motion.div
@@ -35,10 +36,10 @@ function ArtifactCard({ item, onUse, isUsing }) {
         <Button
           size="sm" variant="outline"
           className={`mt-1 w-full text-xs h-8 border ${cfg.border} ${cfg.color} hover:opacity-80`}
-          onClick={() => onUse(item.id)}
+          onClick={() => onUse(item)}
           disabled={isUsing}
         >
-          {isUsing ? <Loader2 className="w-3 h-3 animate-spin" /> : '⚡ Використати'}
+          {isUsing ? <Loader2 className="w-3 h-3 animate-spin" /> : (isPassive ? '🛡️ Активувати' : '⚡ Використати')}
         </Button>
       ) : (
         <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
@@ -228,14 +229,20 @@ export default function Inventory() {
   });
 
   const useMutation_ = useMutation({
-    mutationFn: (id) => base44.api.post(`/inventory/${id}/use`),
-    onMutate: (id) => setUsingId(id),
+    mutationFn: ({ id, effect_type, effect_value }) =>
+      base44.api.post(`/inventory/${id}/use`, { effect_type, effect_value }),
+    onMutate: ({ id }) => setUsingId(id),
     onSettled: () => setUsingId(null),
-    onSuccess: (_, id) => {
+    onSuccess: (data, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['player-profile'] });
       const item = items.find(i => i.id === id);
       const artifact = item ? getArtifact(item.artifact_id) : null;
-      if (artifact) toast.success(`${artifact.icon} ${artifact.name} використано!`);
+      if (artifact) {
+        const xp = data?.applied_xp;
+        const xpMsg = xp > 0 ? ` (+${xp} XP)` : xp < 0 ? ` (${xp} XP)` : '';
+        toast.success(`${artifact.icon} ${artifact.name} використано!${xpMsg}`);
+      }
     },
     onError: () => toast.error('Не вдалося використати артефакт'),
   });
@@ -362,7 +369,10 @@ export default function Inventory() {
                 <ArtifactCard
                   key={item.id}
                   item={item}
-                  onUse={(id) => useMutation_.mutate(id)}
+                  onUse={(invItem) => {
+                    const artifact = getArtifact(invItem.artifact_id);
+                    useMutation_.mutate({ id: invItem.id, effect_type: artifact?.type, effect_value: artifact?.value });
+                  }}
                   isUsing={usingId === item.id}
                 />
               ))}

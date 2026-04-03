@@ -30,7 +30,7 @@ const ENTITY_COLUMNS = {
     'id', 'total_xp', 'current_level', 'current_streak', 'best_streak',
     'start_weight', 'current_weight', 'lowest_weight', 'goal_weight', 'total_money_saved',
     'total_steps', 'unlocked_milestones', 'unlocked_achievements',
-    'frozen_privileges', 'penalty_zone', 'created_at',
+    'frozen_privileges', 'penalty_zone', 'active_effects', 'created_at',
   ],
   DailyLog: [
     'id', 'date::text as date', 'weight', 'steps', 'xp_earned', 'money_saved',

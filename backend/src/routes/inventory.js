@@ -36,8 +36,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-// POST /api/inventory/:id/use — mark artifact as used
+// POST /api/inventory/:id/use — mark artifact as used and apply its effect
 router.post('/:id/use', async (req, res) => {
+  const { effect_type, effect_value } = req.body;
+
   try {
     const result = await db.query(
       `UPDATE inventory SET used = TRUE, used_at = NOW()
@@ -46,7 +48,39 @@ router.post('/:id/use', async (req, res) => {
       [req.params.id, req.userId]
     );
     if (!result.rows.length) return res.status(404).json({ message: 'Artifact not found or already used' });
-    res.json(result.rows[0]);
+
+    let appliedXP = 0;
+
+    if (effect_type === 'xp_bonus' && effect_value) {
+      await db.query(
+        `UPDATE player_profiles SET total_xp = total_xp + $1 WHERE user_id = $2`,
+        [effect_value, req.userId]
+      );
+      appliedXP = effect_value;
+    } else if (effect_type === 'xp_penalty' && effect_value) {
+      await db.query(
+        `UPDATE player_profiles SET total_xp = GREATEST(0, total_xp + $1) WHERE user_id = $2`,
+        [effect_value, req.userId]
+      );
+      appliedXP = effect_value;
+    } else if (effect_type === 'gamble' && effect_value) {
+      const xpDelta = Math.random() < 0.5 ? effect_value : -effect_value;
+      await db.query(
+        `UPDATE player_profiles SET total_xp = GREATEST(0, total_xp + $1) WHERE user_id = $2`,
+        [xpDelta, req.userId]
+      );
+      appliedXP = xpDelta;
+    } else if (['streak_shield', 'penalty_immunity', 'xp_multiplier', 'weight_reduce', 'legendary_buff'].includes(effect_type)) {
+      const effect = { type: effect_type, value: effect_value };
+      await db.query(
+        `UPDATE player_profiles
+         SET active_effects = active_effects || $1::jsonb
+         WHERE user_id = $2`,
+        [JSON.stringify([effect]), req.userId]
+      );
+    }
+
+    res.json({ ...result.rows[0], applied_xp: appliedXP });
   } catch (err) {
     console.error('Inventory use error:', err);
     res.status(500).json({ message: 'Failed to use artifact' });

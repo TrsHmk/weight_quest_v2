@@ -39,34 +39,88 @@ export default function LogEntry() {
 
   const logMutation = useMutation({
     mutationFn: async () => {
-      const w = parseFloat(weight);
+      let w = parseFloat(weight);
       const s = parseInt(steps) || 0;
-      
+
       const prevWeight = profile?.current_weight ?? w;
-      const lowestWeight = Math.min(profile?.lowest_weight ?? w, w);
-      const currentStreak = (profile?.current_streak || 0) + 1;
+      const yesterday = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+      const lastLog = logs[0]; // sorted desc, most recent
+
+      // Active effects from profile
+      let activeEffects = [...(profile?.active_effects || [])];
+      const consumedEffects = new Set();
+      const events = [];
+
+      // ── Streak calculation with auto-reset + streak_shield ──
+      let currentStreak;
+      if (!lastLog || lastLog.date === yesterday) {
+        currentStreak = (profile?.current_streak || 0) + 1;
+      } else {
+        // Missed one or more days
+        const shieldIdx = activeEffects.findIndex(e => e.type === 'streak_shield');
+        if (shieldIdx >= 0) {
+          currentStreak = profile.current_streak; // preserve streak
+          consumedEffects.add(shieldIdx);
+          events.push(`🛡️ Захист стріку спрацював! Стрік збережено (${currentStreak} днів)`);
+        } else {
+          currentStreak = 1;
+          events.push(`💔 Стрік скинуто. Новий початок!`);
+        }
+      }
       const bestStreak = Math.max(profile?.best_streak || 0, currentStreak);
 
-      // Calculate XP
+      // ── Apply weight_reduce effect ──
+      const weightReduceIdx = activeEffects.findIndex(e => e.type === 'weight_reduce');
+      if (weightReduceIdx >= 0) {
+        const reduceBy = activeEffects[weightReduceIdx].value || 0.5;
+        w = Math.max(0, w - reduceBy);
+        consumedEffects.add(weightReduceIdx);
+        events.push(`⚖️ Щасливі ваги: -${reduceBy} кг до запису!`);
+      }
+
+      const lowestWeight = Math.min(profile?.lowest_weight ?? w, w);
+
+      // ── Calculate XP ──
       const weightXP = calculateWeightXP(prevWeight, w);
       const stepsXP = calculateStepsXP(s);
       const streakXP = calculateStreakXP(currentStreak);
-      const totalDayXP = weightXP + stepsXP + streakXP;
+      let totalDayXP = weightXP + stepsXP + streakXP;
+
+      // ── Apply xp_multiplier effect ──
+      const multiplierIdx = activeEffects.findIndex(e => e.type === 'xp_multiplier');
+      if (multiplierIdx >= 0) {
+        const mult = activeEffects[multiplierIdx].value || 2;
+        totalDayXP = Math.round(totalDayXP * mult);
+        consumedEffects.add(multiplierIdx);
+        events.push(`✨ Множник XP x${mult} активовано! (+${totalDayXP} XP)`);
+      }
+
       const newTotalXP = (profile?.total_xp || 0) + totalDayXP;
 
-      // Money
+      // ── Money ──
       const dayMoney = calculateStepsMoney(s);
       const totalMoney = (profile?.total_money_saved || 0) + dayMoney;
 
-      // Penalty zone
-      const penaltyZone = getPenaltyZone(w, lowestWeight);
+      // ── Penalty zone ──
+      let penaltyZone = getPenaltyZone(w, lowestWeight);
 
-      // Milestones
+      // ── Apply penalty_immunity effect ──
+      const immunityIdx = activeEffects.findIndex(e => e.type === 'penalty_immunity');
+      if (immunityIdx >= 0 && penaltyZone !== 'none') {
+        penaltyZone = 'none';
+        consumedEffects.add(immunityIdx);
+        events.push(`🛡️ Імунітет штрафів активовано! Зона ігнорується.`);
+      }
+
+      // ── Remove consumed effects ──
+      activeEffects = activeEffects.filter((_, idx) => !consumedEffects.has(idx));
+
+      // ── Milestones ──
       const newMilestones = getUnlockedMilestones(w).map(m => m.target);
       const prevMilestones = profile?.unlocked_milestones || [];
       const allMilestones = [...new Set([...prevMilestones, ...newMilestones])];
 
-      // Freeze privileges if penalty
+      // ── Freeze privileges if penalty ──
       let frozenPrivileges = profile?.frozen_privileges || [];
       if (penaltyZone === "red") {
         const freezeUntil = new Date();
@@ -77,8 +131,6 @@ export default function LogEntry() {
         }));
       }
 
-      // Events
-      const events = [];
       if (weightXP > 0) events.push(`🎉 Скинув ${(prevWeight - w).toFixed(1)} кг (+${weightXP} XP)`);
       if (stepsXP > 0) events.push(`👟 ${s.toLocaleString()} кроків (+${stepsXP} XP)`);
       if (streakXP > 0) events.push(`🔥 Тижневий стрік бонус! (+${streakXP} XP)`);
@@ -119,6 +171,7 @@ export default function LogEntry() {
         unlocked_achievements: profile?.unlocked_achievements || [],
         frozen_privileges: frozenPrivileges,
         penalty_zone: penaltyZone,
+        active_effects: activeEffects,
       };
 
       if (profile?.id) {

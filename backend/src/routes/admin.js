@@ -91,6 +91,31 @@ router.get('/users/:userId', async (req, res) => {
   }
 });
 
+// PATCH /api/admin/users/:userId/logs/:logId — update weight and/or steps for a specific log
+router.patch('/users/:userId/logs/:logId', async (req, res) => {
+  const { userId, logId } = req.params;
+  const { weight, steps } = req.body;
+  if (weight == null && steps == null) return res.status(400).json({ message: 'weight or steps required' });
+
+  try {
+    const sets = [];
+    const values = [];
+    if (weight != null) { sets.push(`weight = $${values.length + 1}`); values.push(parseFloat(weight)); }
+    if (steps  != null) { sets.push(`steps  = $${values.length + 1}`); values.push(parseInt(steps)); }
+    values.push(logId, userId);
+
+    const result = await db.query(
+      `UPDATE daily_logs SET ${sets.join(', ')} WHERE id = $${values.length - 1} AND user_id = $${values.length} RETURNING *, date::text AS date`,
+      values
+    );
+    if (!result.rows.length) return res.status(404).json({ message: 'Log not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Admin patch log error:', err);
+    res.status(500).json({ message: 'Failed to update log' });
+  }
+});
+
 // DELETE /api/admin/users/:userId/logs/:logId
 router.delete('/users/:userId/logs/:logId', async (req, res) => {
   try {

@@ -37,6 +37,7 @@ export const api = {
     users:          (page = 1, limit = 20) =>
                                   request('GET',    `/admin/users?page=${page}&limit=${limit}`),
     user:           (id)       => request('GET',    `/admin/users/${id}`),
+    updateLog:      (uid, lid, body) => request('PATCH', `/admin/users/${uid}/logs/${lid}`, body),
     deleteLog:      (uid, lid) => request('DELETE', `/admin/users/${uid}/logs/${lid}`),
     clearLogs:      (uid)      => request('DELETE', `/admin/users/${uid}/logs`),
     deleteItem:     (uid, iid) => request('DELETE', `/admin/users/${uid}/inventory/${iid}`),

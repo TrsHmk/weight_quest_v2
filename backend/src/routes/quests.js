@@ -32,10 +32,20 @@ function pickRandom(arr, n) {
   return shuffled.slice(0, n);
 }
 
-function generateQuests() {
+function generateQuests(streak = 0) {
   const easy   = pickRandom(QUEST_POOL.filter(q => q.difficulty === 'easy'),   1);
   const medium = pickRandom(QUEST_POOL.filter(q => q.difficulty === 'medium'), 1);
-  const hard   = pickRandom(QUEST_POOL.filter(q => ['hard','epic','legendary'].includes(q.difficulty)), 1);
+
+  let hardPool;
+  if (streak >= 14) {
+    hardPool = QUEST_POOL.filter(q => ['hard','epic','legendary'].includes(q.difficulty));
+  } else if (streak >= 7) {
+    hardPool = QUEST_POOL.filter(q => ['hard','epic'].includes(q.difficulty));
+  } else {
+    hardPool = QUEST_POOL.filter(q => q.difficulty === 'hard');
+  }
+  const hard = pickRandom(hardPool, 1);
+
   return [...easy, ...medium, ...hard].map(q => ({ ...q, completed: false }));
 }
 
@@ -48,7 +58,12 @@ router.get('/', async (req, res) => {
       [req.userId, today]
     );
     if (!result.rows.length) {
-      const quests = generateQuests();
+      const profileResult = await db.query(
+        'SELECT current_streak FROM player_profiles WHERE user_id = $1',
+        [req.userId]
+      );
+      const streak = profileResult.rows[0]?.current_streak || 0;
+      const quests = generateQuests(streak);
       result = await db.query(
         'INSERT INTO daily_quests (user_id, date, quests) VALUES ($1, $2, $3) RETURNING *',
         [req.userId, today, JSON.stringify(quests)]
